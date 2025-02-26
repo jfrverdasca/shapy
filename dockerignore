@@ -1,0 +1,11 @@
+.git
+.idea
+.ruff_cache
+
+.gitignore
+Dockerfile
+README.md
+
+out/
+samples/
+!samples/docker

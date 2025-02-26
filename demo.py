@@ -2,6 +2,10 @@ import os
 import os.path as osp
 import sys
 
+from human_shape.measurer.constans import STANDARD_LABELS
+from human_shape.measurer.measure import MeasureLoadedSMPLX
+from human_shape.measurer.utils import evaluate_mae
+
 os.environ["PYOPENGL_PLATFORM"] = "egl"
 
 import argparse
@@ -107,6 +111,42 @@ def undo_img_normalization(image, mean, std, add_alpha=True):
             constant_values=1.0,
         )
     return out_img
+
+
+def get_measures(
+    gender: str,
+    vertices: torch.Tensor,
+    joints: torch.Tensor,
+    faces: torch.Tensor,
+    height: float,
+):
+    measurer = MeasureLoadedSMPLX(gender, vertices, joints, faces)
+    measurer.measure(measurer.all_possible_measurements)
+    measurer.height_normalize_measurements(height)
+    measurer.label_measurements(STANDARD_LABELS)
+
+    return measurer.get_height_normalized_measurements
+
+
+my_measures = {
+    "height": 186.0,
+    "shoulder to crotch height": 70.2,
+    "arm left length": 58,
+    "arm right length": 58,
+    "inside leg height": 78,
+    "shoulder breadth": 47,
+    "head circumference": 58.5,
+    "neck circumference": 40,
+    "chest circumference": 99,
+    "waist circumference": 90.5,
+    "hip circumference": 96,
+    "wrist right circumference": 18,
+    "bicep right circumference": 29.5,
+    "forearm right circumference": 29,
+    "thigh left circumference": 59,
+    "calf left circumference": 41,
+    "ankle left circumference": 24.5,
+}
 
 
 @torch.no_grad()
@@ -244,6 +284,7 @@ def main(
                 continue
 
             faces = stage_n_out["faces"]
+            joints = stage_n_out["joints"]
             model_vertices = model_vertices.detach().cpu().numpy()
             camera_parameters = model_output.get("camera_parameters", {})
             camera_scale = camera_parameters["scale"].detach()
@@ -276,6 +317,18 @@ def main(
                 out_img[f"hd_{stage_key}_cat"] = np.concatenate(
                     [bg_hd_imgs, overlays], axis=-1
                 )
+
+            measurement_start_time = time.perf_counter()
+            measures = get_measures(
+                "MALE",
+                model_vertices.squeeze(),
+                joints.squeeze().detach().cpu().numpy(),
+                faces,
+                186,
+            )
+            logger.info(
+                f"Measures: {measures}, MAE: {sum(evaluate_mae(measures, my_measures).values())} Measurement time: {time.perf_counter() - measurement_start_time}"
+            )
 
         if save_vis:
             for key in out_img.keys():
