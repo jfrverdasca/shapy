@@ -587,7 +587,7 @@ class SMPLX(SMPLH):
         is_training=False,
         expression=None,
         use_face_contour=False,
-        gender="neutral",
+        gender="male",
         dtype=torch.float32,
         ext="npz",
         **kwargs,

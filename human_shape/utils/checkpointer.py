@@ -82,10 +82,14 @@ class Checkpointer(object):
         with open(save_fn, "r") as f:
             try:
                 latest_ckpt_fn = save_fn
-                ckpt_data = torch.load(latest_ckpt_fn, map_location=map_location)
+                ckpt_data = torch.load(
+                    latest_ckpt_fn, map_location=map_location, weights_only=True
+                )
             except:
                 latest_ckpt_fn = f.read().strip()
-                ckpt_data = torch.load(latest_ckpt_fn, map_location=map_location)
+                ckpt_data = torch.load(
+                    latest_ckpt_fn, map_location=map_location, weights_only=True
+                )
 
         logger.warning(f"Loading checkpoint from {latest_ckpt_fn}!")
 

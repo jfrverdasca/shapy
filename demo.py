@@ -13,9 +13,8 @@ import resource
 import time
 from collections import OrderedDict, defaultdict
 
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
-import PIL.Image as pil_img
 import torch
 import trimesh
 from loguru import logger
@@ -318,18 +317,6 @@ def main(
                     [bg_hd_imgs, overlays], axis=-1
                 )
 
-            measurement_start_time = time.perf_counter()
-            measures = get_measures(
-                "MALE",
-                model_vertices.squeeze(),
-                joints.squeeze().detach().cpu().numpy(),
-                faces,
-                186,
-            )
-            logger.info(
-                f"Measures: {measures}, MAE: {sum(evaluate_mae(measures, my_measures).values())} Measurement time: {time.perf_counter() - measurement_start_time}"
-            )
-
         if save_vis:
             for key in out_img.keys():
                 out_img[key] = np.clip(
@@ -355,9 +342,12 @@ def main(
 
             if save_vis:
                 for name, curr_img in out_img.items():
-                    print(osp.join(curr_out_path, f"{imgfname}_{name}.png"))
-                    pil_img.fromarray(curr_img[idx]).save(
-                        osp.join(curr_out_path, f"{imgfname}_{name}.png")
+                    img_path = osp.join(curr_out_path, f"{imgfname}_{name}.png")
+                    logger.info(f"Saving {img_path}")
+
+                    cv2.imwrite(
+                        img_path,
+                        cv2.cvtColor(curr_img[idx], cv2.COLOR_RGB2BGR),
                     )
 
             if save_mesh:
@@ -386,6 +376,18 @@ def main(
                     else:
                         out_params[key] = val[idx]
                 np.savez_compressed(params_fname, **out_params)
+
+        measurement_start_time = time.perf_counter()
+        measures = get_measures(
+            "MALE",
+            model_vertices.squeeze(),
+            joints.squeeze().detach().cpu().numpy(),
+            faces,
+            186,
+        )
+        logger.info(
+            f"{fname}: Measures: {measures}, MAE: {sum(evaluate_mae(measures, my_measures).values())} Measurement time: {time.perf_counter() - measurement_start_time}"
+        )
 
     logger.info(f"Average inference time: {total_time / cnt}")
 

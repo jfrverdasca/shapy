@@ -14,11 +14,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as nninit
 
-# from attributes import A2B, B2A
 # from body_measurements import BodyMeasurements
 from loguru import logger
 from omegaconf import DictConfig
 
+# from attributes.attributes_betas import A2B, B2A
 from human_shape.data.structures import StructureList
 from human_shape.losses import build_loss
 from human_shape.utils import (
@@ -164,7 +164,7 @@ class HMRLikeRegressor(nn.Module):
             male_cfg = male_hparams.get("cfg", {})
             # male_cfg.update(male_hparams)
             # load regressor for males
-            self.b2a_males = None  # 2A.load_from_checkpoint(
+            self.b2a_males = None  # B2A.load_from_checkpoint(
             #     b2a_males_checkpoint_path, cfg=male_cfg
             # )
             self.b2a_males.eval()

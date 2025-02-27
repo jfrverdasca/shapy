@@ -545,7 +545,7 @@ class HighResolutionNet(nn.Module):
         pretrained = osp.expandvars(pretrained)
         if osp.isfile(pretrained):
             pretrained_state_dict = torch.load(
-                pretrained, map_location=torch.device("cpu")
+                pretrained, map_location=torch.device("cpu"), weights_only=True
             )
             logger.info("=> loading pretrained model {}".format(pretrained))
 
